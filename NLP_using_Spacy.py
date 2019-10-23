@@ -14,11 +14,11 @@ nlp = spacy.load('en_core_web_sm')
 
 intros = ['robot', 'please', 'could you please', 'robot please', 'robot could you please', 'can you', 'robot can you',  'could you', 'robot could you']
 
-tasks_go = ['go', 'put', 'navigate', 'proceed', 'move', 'advance', 'travel', 'drive', 'come', 'go near', 'walk']
+tasks_go = ['go', 'navigate', 'proceed', 'move', 'advance', 'travel', 'drive', 'come', 'go near', 'walk']
 
-# 'put' inicialmente era uma terefa take
+# 'put', 'bring' inicialmente era uma terefa take
 
-tasks_take = ['take','grasp', 'pick up', 'pick', 'bring','bring me', 'give','deliver','get','place']
+tasks_take = ['put', 'bring','take','grasp', 'pick up', 'pick', 'give','deliver','get','place']
 
 tasks_find = ['find', 'look', 'locate']
 
@@ -252,9 +252,9 @@ def slot_filling(frase):
 
 # stt = 'Move to the side table grasp the Marmelade and bring it to me.  '
 
-# stt = "Move to the bench, grasp the Fanta and put it in the trash bin"
+# stt = "Move to the bench, grasp the Cereal and put it in the trash bin"
 
-stt = 'Move to the stove, grasp the Apple juice and put it in the trash bin.'
+stt = 'Move to the bookshelf, move to the hallway table, and move to the bench'
 
 
 ###############################################################33
@@ -263,7 +263,7 @@ phrase = divide_sentence_in_phrases(stt)
 
 #######################################################################33
 all_content = []
-simple_words = ['the', 'to', 'and', 'a']
+simple_words = ['the', 'to', 'a']
 
 for k, inst in enumerate(phrase):
     
@@ -272,30 +272,33 @@ for k, inst in enumerate(phrase):
     print('\nInstrução: ', inst)
     instruction = inst.lower().split()
     
+
 ############### Intention detection  ############
    
     intention = intention_detection(instruction)
 
-    print('Intention Detection:', intention)
+    # print('Intention Detection:', intention)
     
     try:
         instruction.remove(intention[1])
-        frase_nlp.append(intention[0])
+        # frase_nlp.append(intention[0])
     except:
         print('Nada para remover e adicionar')
 
-# Remove as simple_words ['the', 'to', 'and', 'a']
+# Remove as simple_words ['the', 'to', 'a']
 
     for i, j in enumerate(simple_words):
         if j in instruction:
             instruction.remove(j)
 
+
 ################### Slot Filling ##############
+
     slot = slot_filling(str(instruction))
     try:
         for i in slot:
             instruction.remove(i)
-            print(i, ' removed')
+            # print(i, ' removed')
     except:
         print('Nada pra remover - slot filling')
 
@@ -305,9 +308,12 @@ for k, inst in enumerate(phrase):
 
 
 
-
+####################################################
 ############ PARTE DAS GAMBIARRAS   ################
-    # faz referencia ao objeto anterior
+####################################################
+
+
+# faz referencia ao objeto anterior
 
     # if 'it' in instruction:
     #     try:
@@ -315,27 +321,43 @@ for k, inst in enumerate(phrase):
     #     except: 
     #         print("slot = slot antigo + slot")
     # else:
-    #     slot_antigo = slot
+    #     slot_antigo = slots
     
+
+# intention 'take' passa a ser 'GO'
+    
+    if 'it' in instruction:
+        frase_nlp.append('GO')
+        instruction.remove('it')
+    else:
+    	frase_nlp.append(intention[0])
+
+
 # pega o 'me' da frase
-
+    
     if 'me' in instruction:
-        try:
-            slot.append('me')
-        except: 
-            print("adicionando o 'me'")
+        slot.append('me')
+        instruction.remove('me')
 
-    print('Slot Filling: ',slot)
+
+# tratando o problema do 'side board, side table'
+    
+    words_problem = ['board', 'table']
+    if 'side' in instruction:
+        slot = ['side'] + slot
+        instruction.remove('side')
+
+
+# printando os valores, intention and slot filling
+
+    print('Inten. Detec: ', frase_nlp[0], '\nSlot Filling: ',slot)
 
     print('Resto: ',str(instruction))
 
-# tratando o problema do 'side board'
-    if len(instruction) != 0:
-        slot_resto = slot_filling(str(instruction))
-        print("Slot_resto: ",slot_resto)
-        slot.append(slot_resto)
-# colocando naquele esquema de lista de listas, matrix...
 
+# colocando naquele esquema de lista de listas, matrix...
+    
+    # add all slots filling
     for s in slot:
         frase_nlp.append(s)       
     
